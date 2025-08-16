@@ -37,6 +37,8 @@ using System.Windows.Forms;
 using ServiceBusExplorer.Controls;
 using ServiceBusExplorer.Helpers;
 using Microsoft.ServiceBus.Messaging;
+using Abstractions;
+using ServiceBusExplorer.WindowsAzure;
 
 #endregion
 
@@ -111,7 +113,7 @@ namespace ServiceBusExplorer.Forms
         #endregion
 
         #region Public Constructors
-        public ContainerForm(ServiceBusHelper serviceBusHelper, MainForm mainForm, FormTypeEnum formType, QueueDescription queueDescription)
+        public ContainerForm(ServiceBusHelper serviceBusHelper, MainForm mainForm, FormTypeEnum formType, QueueInfo queueDescription)
         {
             try
             {
@@ -132,7 +134,7 @@ namespace ServiceBusExplorer.Forms
 
                 if (formType == FormTypeEnum.Listener)
                 {
-                    var listenerControl = new ListenerControl(WriteToLog, StopLog, StartLog, new ServiceBusHelper(WriteToLog, serviceBusHelper), queueDescription)
+                    var listenerControl = new ListenerControl(WriteToLog, StopLog, StartLog, new ServiceBusHelper(WriteToLog, serviceBusHelper), queueDescription.ToWindowsAzure())
                     {
                         Location = new Point(1, panelMain.HeaderHeight + 1),
                         Size = new Size(panelMain.Size.Width - 3, queueDescription.RequiresSession ? 544 : 520),

@@ -21,6 +21,7 @@
 
 #region Using Directives
 
+using Abstractions;
 using Microsoft.ServiceBus.Messaging;
 
 using ServiceBusExplorer.Forms;
@@ -1727,7 +1728,7 @@ namespace ServiceBusExplorer.Controls
         {
             if (!string.IsNullOrWhiteSpace(path))
             {
-                QueueDescription queueDescriptionSource = null;
+                QueueInfo queueDescriptionSource = null;
                 try
                 {
                     queueDescriptionSource = serviceBusHelper.GetQueue(path);

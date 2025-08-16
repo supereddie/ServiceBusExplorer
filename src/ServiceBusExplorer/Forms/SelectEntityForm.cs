@@ -27,6 +27,7 @@ using System.Windows.Forms;
 using Microsoft.Azure.NotificationHubs;
 using ServiceBusExplorer.Helpers;
 using Microsoft.ServiceBus.Messaging;
+using Abstractions;
 
 #endregion
 
@@ -66,7 +67,7 @@ namespace ServiceBusExplorer.Forms
         readonly bool includeEventHubs;
         readonly bool includeNotificationHubs;
         readonly bool includeRelays;
-        readonly QueueDescription queueDescriptionSource;  // Might be null
+        readonly QueueInfo queueDescriptionSource;  // Might be null
         readonly TopicDescription topicDescriptionSource;  // Might be null
         #endregion
 
@@ -122,7 +123,7 @@ namespace ServiceBusExplorer.Forms
         public SelectEntityForm(string dialogTitle,
                                string groupTitle,
                                string labelText,
-                               QueueDescription queueDescriptionSource,
+                               QueueInfo queueDescriptionSource,
                                bool subscriptions = false,
                                bool eventHubs = false,
                                bool notificationHubs = false,
@@ -193,7 +194,7 @@ namespace ServiceBusExplorer.Forms
                     {
                         if (level1Node.Name == QueueEntities)
                         {
-                            if (FocusNodeIfMatching<QueueDescription>(level1Node, qd => qd.Path, queueDescriptionSource.Path))
+                            if (FocusNodeIfMatching<QueueInfo>(level1Node, qd => qd.Path, queueDescriptionSource.Path))
                             {
                                 return;
                             }
@@ -265,7 +266,7 @@ namespace ServiceBusExplorer.Forms
         #region Private Methods
         void SetTextAndType(TreeNode node)
         {
-            var queueTag = node.Tag as QueueDescription;
+            var queueTag = node.Tag as QueueInfo;
             if (queueTag != null)
             {
                 txtEntity.Text = queueTag.Path;
@@ -334,7 +335,7 @@ namespace ServiceBusExplorer.Forms
                               parent.Nodes.Add(node.Name, node.Text, node.ImageIndex, node.SelectedImageIndex);
             if (node.Tag != null)
             {
-                if (node.Tag is QueueDescription ||
+                if (node.Tag is QueueInfo ||
                     node.Tag is TopicDescription ||
                     (includeSubscriptions && node.Tag is SubscriptionWrapper && ((SubscriptionWrapper)node.Tag).SubscriptionDescription != null) ||
                     (includeEventHubs && (node.Tag is EventHubDescription || node.Tag is ConsumerGroupDescription)) ||

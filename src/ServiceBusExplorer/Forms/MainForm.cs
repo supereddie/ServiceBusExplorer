@@ -20,6 +20,7 @@
 #endregion
 
 #region Using Directives
+using Abstractions;
 using Azure;
 using Azure.ResourceManager.EventGrid;
 using EventGridExplorerLibrary;
@@ -50,6 +51,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ServiceBusExplorer.WindowsAzure;
 #endregion
 
 namespace ServiceBusExplorer.Forms
@@ -394,7 +396,7 @@ namespace ServiceBusExplorer.Forms
 
         private void duplicateQueueMenuItem_Click(object sender, EventArgs e)
         {
-            var queueWrappper = serviceBusTreeView.SelectedNode.Tag as QueueDescription;
+            var queueWrappper = serviceBusTreeView.SelectedNode.Tag as QueueInfo;
             panelMain.HeaderText = string.Format(DuplicateQueueFormat, queueWrappper.Path);
             ShowQueue(queueWrappper, queueWrappper.Path, true);
         }
@@ -697,7 +699,7 @@ namespace ServiceBusExplorer.Forms
                 panelMain.HeaderText = Entity;
                 serviceBusTreeView.SelectedNode = rootNode;
                 rootNode.EnsureVisible();
-                // QueueDescription Entity
+                // QueueInfo Entity
                 if (args.EntityType == EntityType.Queue)
                 {
                     string queueName = null;
@@ -707,7 +709,7 @@ namespace ServiceBusExplorer.Forms
                     }
                     else
                     {
-                        var queueDescription = args.EntityInstance as QueueDescription;
+                        var queueDescription = args.EntityInstance as QueueInfo;
                         if (queueDescription != null)
                         {
                             queueName = queueDescription.Path;
@@ -1049,10 +1051,10 @@ namespace ServiceBusExplorer.Forms
                 serviceBusTreeView.SuspendDrawing();
                 serviceBusTreeView.SuspendLayout();
 
-                // QueueDescription Entity
+                // QueueInfo Entity
                 if (args.EntityType == EntityType.Queue)
                 {
-                    var queue = args.EntityInstance as QueueDescription;
+                    var queue = args.EntityInstance as QueueInfo;
                     if (queue != null)
                     {
                         var queueListNode = FindNode(Constants.QueueEntities, rootNode);
@@ -1646,11 +1648,12 @@ namespace ServiceBusExplorer.Forms
                 }
 
                 // Queue Node
-                if (serviceBusTreeView.SelectedNode.Tag is QueueDescription queueDescription)
+                if (serviceBusTreeView.SelectedNode.Tag is QueueInfo queueDescription)
                 {
-                    ExportEntities(new List<IExtensibleDataObject> { queueDescription },
-                                   queueDescription.Path,
-                                   QueueEntity);
+                    // TODO: Disabled temporary
+                    //ExportEntities(new List<IExtensibleDataObject> { queueDescription },
+                    //               queueDescription.Path,
+                    //               QueueEntity);
                     return;
                 }
 
@@ -1738,7 +1741,7 @@ namespace ServiceBusExplorer.Forms
                 Cursor.Current = Cursors.WaitCursor;
 
                 // Queue Node
-                if (serviceBusTreeView.SelectedNode.Tag is QueueDescription queueDescription)
+                if (serviceBusTreeView.SelectedNode.Tag is QueueInfo queueDescription)
                 {
                     using (var parameterForm = new ParameterForm($"Enter a new name for the {queueDescription.Path} queue.",
                             new List<string> { "Name" },
@@ -1872,7 +1875,7 @@ namespace ServiceBusExplorer.Forms
             {
                 if (serviceBusTreeView.SelectedNode != null)
                 {
-                    // Queues Node (Create New QueueDescription)
+                    // Queues Node (Create New QueueInfo)
                     if (serviceBusTreeView.SelectedNode.Name == Constants.QueueEntities)
                     {
                         panelMain.HeaderText = CreateQueue;
@@ -2301,7 +2304,7 @@ namespace ServiceBusExplorer.Forms
                     }
 
                     // Queue Node
-                    if (serviceBusTreeView.SelectedNode.Tag is QueueDescription queueDescription)
+                    if (serviceBusTreeView.SelectedNode.Tag is QueueInfo queueDescription)
                     {
                         using (var deleteForm = new DeleteForm(queueDescription.Path, QueueEntity.ToLower()))
                         {
@@ -2576,7 +2579,7 @@ namespace ServiceBusExplorer.Forms
         {
             try
             {
-                var tag = serviceBusTreeView.SelectedNode.Tag as QueueDescription;
+                var tag = serviceBusTreeView.SelectedNode.Tag as QueueInfo;
                 if (tag != null)
                 {
                     // Put a check against the item that reflects the current status of the queue
@@ -2585,7 +2588,7 @@ namespace ServiceBusExplorer.Forms
                     foreach (var dropDownItem in changeStatusQueueMenuItem.DropDownItems)
                     {
                         var dropDownMenuItem = dropDownItem as ToolStripMenuItem;
-                        dropDownMenuItem.Checked = (EntityStatus)dropDownMenuItem.Tag == status;
+                        dropDownMenuItem.Checked = (BaseEntityStatus)dropDownMenuItem.Tag == status;
                     }
                 }
                 else
@@ -2607,15 +2610,15 @@ namespace ServiceBusExplorer.Forms
                 if (serviceBusHelper != null &&
                     serviceBusTreeView.SelectedNode != null)
                 {
-                    if (serviceBusTreeView.SelectedNode.Tag is QueueDescription queueDescription)
+                    if (serviceBusTreeView.SelectedNode.Tag is QueueInfo queueDescription)
                     {
                         var desiredStatus = (EntityStatus)e.ClickedItem.Tag;
                         using (var changeStatusForm = new ChangeStatusForm(queueDescription.Path, QueueEntity.ToLower(), desiredStatus))
                         {
                             if (changeStatusForm.ShowDialog() == DialogResult.OK)
                             {
-                                queueDescription.Status = (EntityStatus)e.ClickedItem.Tag;
-                                serviceBusHelper.NamespaceManager.UpdateQueue(queueDescription);
+                                queueDescription.Status = (BaseEntityStatus)e.ClickedItem.Tag;
+                                serviceBusHelper.NamespaceManager.UpdateQueue(queueDescription.ToWindowsAzure());
                                 await RefreshSelectedEntity();
                             }
                         }
@@ -2645,14 +2648,14 @@ namespace ServiceBusExplorer.Forms
                     serviceBusTreeView.SelectedNode != null)
                 {
                     // Queue Node
-                    if (serviceBusTreeView.SelectedNode.Tag is QueueDescription queueDescription)
+                    if (serviceBusTreeView.SelectedNode.Tag is QueueInfo queueDescription)
                     {
                         using (var changeQueueStatusForm = new ChangeQueueStatusForm(queueDescription.Status))
                         {
                             if (changeQueueStatusForm.ShowDialog() == DialogResult.OK)
                             {
                                 queueDescription.Status = changeQueueStatusForm.EntityStatus;
-                                await serviceBusHelper.NamespaceManager.UpdateQueueAsync(queueDescription);
+                                await serviceBusHelper.NamespaceManager.UpdateQueueAsync(queueDescription.ToWindowsAzure());
                                 await RefreshSelectedEntity();
                             }
                         }
@@ -2761,10 +2764,10 @@ namespace ServiceBusExplorer.Forms
                 {
                     return;
                 }
-                // QueueDescription Node
-                if (serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                // QueueInfo Node
+                if (serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                 {
-                    var queue = serviceBusTreeView.SelectedNode.Tag as QueueDescription;
+                    var queue = serviceBusTreeView.SelectedNode.Tag as QueueInfo;
                     panelMain.HeaderText = string.Format(TestQueueFormat, queue.Path);
                     TestQueue(queue, true);
                     return;
@@ -2829,10 +2832,10 @@ namespace ServiceBusExplorer.Forms
                     {
                         return;
                     }
-                    // QueueDescription Node
-                    if (serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                    // QueueInfo Node
+                    if (serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                     {
-                        var queue = serviceBusTreeView.SelectedNode.Tag as QueueDescription;
+                        var queue = serviceBusTreeView.SelectedNode.Tag as QueueInfo;
                         TestQueue(queue, false);
                         return;
                     }
@@ -2892,10 +2895,10 @@ namespace ServiceBusExplorer.Forms
                     return;
                 }
 
-                // QueueDescription Node
-                if (serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                // QueueInfo Node
+                if (serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                 {
-                    var queueDescription = serviceBusTreeView.SelectedNode.Tag as QueueDescription;
+                    var queueDescription = serviceBusTreeView.SelectedNode.Tag as QueueInfo;
                     var form = new ContainerForm(serviceBusHelper, this, FormTypeEnum.Listener, queueDescription);
                     form.Show();
                     return;
@@ -3007,7 +3010,7 @@ namespace ServiceBusExplorer.Forms
                     }
 
                     // Queue Node
-                    var tag = serviceBusTreeView.SelectedNode.Tag as QueueDescription;
+                    var tag = serviceBusTreeView.SelectedNode.Tag as QueueInfo;
                     if (tag != null)
                     {
                         var queueDescription = serviceBusHelper.GetQueue(tag.Path);
@@ -3618,7 +3621,7 @@ namespace ServiceBusExplorer.Forms
                 }
 
                 // Queue Node
-                if (node.Tag is QueueDescription queueDescription)
+                if (node.Tag is QueueInfo queueDescription)
                 {
                     getQueueMessageSessionsMenuItem.Visible = queueDescription.RequiresSession;
                     getQueueMessageSessionsSeparator.Visible = queueDescription.RequiresSession;
@@ -4194,9 +4197,9 @@ namespace ServiceBusExplorer.Forms
             }
         }
 
-        private void RefreshQueueNode(TreeNode node, QueueDescription queueDescription)
+        private void RefreshQueueNode(TreeNode node, QueueInfo queueDescription)
         {
-            if (queueDescription.Status == EntityStatus.Active)
+            if (queueDescription.Status == BaseEntityStatus.Active)
             {
                 node.ImageIndex = QueueIconIndex;
                 node.SelectedImageIndex = QueueIconIndex;
@@ -4208,7 +4211,7 @@ namespace ServiceBusExplorer.Forms
             }
 
             node.Tag = queueDescription;
-            node.Text = GetNameAndMessageCountText(node.Name, queueDescription.MessageCountDetails);
+            node.Text = GetNameAndMessageCountText(node.Name, queueDescription.MessageCountDetails.ToWindowsAzure());
         }
 
         private void RefreshTopicNode(TreeNode node, TopicDescription topicDescription)
@@ -5253,7 +5256,7 @@ namespace ServiceBusExplorer.Forms
             }
         }
 
-        private void ShowQueue(QueueDescription queue, string path, bool duplicateQueue = false)
+        private void ShowQueue(QueueInfo queue, string path, bool duplicateQueue = false)
         {
             HandleQueueControl queueControl = null;
 
@@ -5646,7 +5649,7 @@ namespace ServiceBusExplorer.Forms
             }
         }
 
-        private void TestQueue(QueueDescription queueDescription, bool sdi)
+        private void TestQueue(QueueInfo queueDescription, bool sdi)
         {
             if (sdi)
             {
@@ -5935,16 +5938,16 @@ namespace ServiceBusExplorer.Forms
                 {
                     case "copyQueueUrlMenuItem":
                         if (serviceBusTreeView.SelectedNode != null &&
-                            serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                            serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                         {
-                            uri = serviceBusHelper.GetQueueUri(((QueueDescription)serviceBusTreeView.SelectedNode.Tag).Path);
+                            uri = serviceBusHelper.GetQueueUri(((QueueInfo)serviceBusTreeView.SelectedNode.Tag).Path);
                         }
                         break;
                     case "copyQueueDeadletterQueueUrlMenuItem":
                         if (serviceBusTreeView.SelectedNode != null &&
-                            serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                            serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                         {
-                            uri = serviceBusHelper.GetQueueDeadLetterQueueUri(((QueueDescription)serviceBusTreeView.SelectedNode.Tag).Path);
+                            uri = serviceBusHelper.GetQueueDeadLetterQueueUri(((QueueInfo)serviceBusTreeView.SelectedNode.Tag).Path);
                         }
                         break;
                     case "copyTopicUrlMenuItem":
@@ -6219,7 +6222,7 @@ namespace ServiceBusExplorer.Forms
                                                           UrlSegmentIconIndex,
                                                           UrlSegmentIconIndex);
                         var entityType = EntityType.Queue;
-                        if (tag is QueueDescription)
+                        if (tag is QueueInfo)
                         {
                             entityNode.ContextMenuStrip = queueFolderContextMenuStrip;
                         }
@@ -6238,13 +6241,13 @@ namespace ServiceBusExplorer.Forms
                     }
                     else
                     {
-                        if (tag is QueueDescription)
+                        if (tag is QueueInfo)
                         {
-                            var queueDescription = tag as QueueDescription;
+                            var queueDescription = tag as QueueInfo;
                             entityNode = entityNode.Nodes.Add(segments[i],
-                                                              GetNameAndMessageCountText(segments[i], queueDescription.MessageCountDetails),
-                                                              queueDescription.Status == EntityStatus.Active ? QueueIconIndex : GreyQueueIconIndex,
-                                                              queueDescription.Status == EntityStatus.Active ? QueueIconIndex : GreyQueueIconIndex);
+                                                              GetNameAndMessageCountText(segments[i], queueDescription.MessageCountDetails.ToWindowsAzure()),
+                                                              queueDescription.Status == BaseEntityStatus.Active ? QueueIconIndex : GreyQueueIconIndex,
+                                                              queueDescription.Status == BaseEntityStatus.Active ? QueueIconIndex : GreyQueueIconIndex);
                             entityNode.ContextMenuStrip = queueContextMenuStrip;
                             entityNode.Tag = tag;
                             ApplyColor(entityNode, true);
@@ -6400,7 +6403,7 @@ namespace ServiceBusExplorer.Forms
             {
                 return;
             }
-            var tag = node.Tag as QueueDescription;
+            var tag = node.Tag as QueueInfo;
             if (tag != null)
             {
                 list.Add(tag.Path);
@@ -6418,10 +6421,11 @@ namespace ServiceBusExplorer.Forms
             {
                 return;
             }
-            var tag = node.Tag as QueueDescription;
+            var tag = node.Tag as QueueInfo;
             if (tag != null)
             {
-                list.Add(tag);
+                // TODO: Disable temporary for export
+                // list.Add(tag);
                 return;
             }
             for (var i = 0; i < node.Nodes.Count; i++)
@@ -6667,7 +6671,7 @@ namespace ServiceBusExplorer.Forms
                     var queueControl = panelMain.Controls[0] as HandleQueueControl;
                     if (queueControl != null)
                     {
-                        var queueDescription = view.SelectedNode.Tag as QueueDescription;
+                        var queueDescription = view.SelectedNode.Tag as QueueInfo;
                         if (queueDescription != null)
                         {
                             queueControl.PurgeMessages(Convert.ToInt32(queueDescription.MessageCount));
@@ -6684,7 +6688,7 @@ namespace ServiceBusExplorer.Forms
                                          string.Compare(text, subscriptionReceiveTransferDeadletterQueueMessagesMenuItem.Text, StringComparison.OrdinalIgnoreCase) == 0;
 
                 // Queue Node
-                if (serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                if (serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                 {
                     var control = panelMain.Controls[0] as HandleQueueControl;
                     if (control != null)
@@ -6747,9 +6751,9 @@ namespace ServiceBusExplorer.Forms
                         return;
                     }
                     // Queue Node
-                    if (serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                    if (serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                     {
-                        var queueDescription = serviceBusTreeView.SelectedNode.Tag as QueueDescription;
+                        var queueDescription = serviceBusTreeView.SelectedNode.Tag as QueueInfo;
                         form = new ContainerForm(serviceBusHelper, this, FormTypeEnum.Send, queueDescription);
                     }
 
@@ -6989,7 +6993,7 @@ namespace ServiceBusExplorer.Forms
                     return;
                 }
                 // Queue Node
-                if (serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                if (serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                 {
                     var control = panelMain.Controls[0] as HandleQueueControl;
                     control?.GetMessageSessions();
@@ -7315,7 +7319,7 @@ namespace ServiceBusExplorer.Forms
                 }
 
                 // Queue Node
-                if (serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                if (serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                 {
                     var control = panelMain.Controls[0] as HandleQueueControl;
                     if (control != null)
@@ -7350,7 +7354,7 @@ namespace ServiceBusExplorer.Forms
                 }
 
                 // Queue Node
-                if (serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                if (serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                 {
                     var control = panelMain.Controls[0] as HandleQueueControl;
                     if (control != null)
@@ -7385,7 +7389,7 @@ namespace ServiceBusExplorer.Forms
                 }
 
                 // Queue Node
-                if (serviceBusTreeView.SelectedNode.Tag is QueueDescription)
+                if (serviceBusTreeView.SelectedNode.Tag is QueueInfo)
                 {
                     var control = panelMain.Controls[0] as HandleQueueControl;
                     if (control != null)
@@ -7446,7 +7450,7 @@ namespace ServiceBusExplorer.Forms
                 List<SubscriptionWrapper> subscriptions = new List<SubscriptionWrapper>();
                 Func<TreeNode, IEnumerable<SubscriptionWrapper>> subscriptionsExtractor = tn => tn.FirstNode?.Nodes.Cast<TreeNode>().Select(n => n.Tag as SubscriptionWrapper) ?? Enumerable.Empty<SubscriptionWrapper>();
 
-                List<QueueDescription> queues = new List<QueueDescription>();
+                List<QueueInfo> queues = new List<QueueInfo>();
 
                 string strategyDescription = ServiceBusExplorerResources.ResourceManager.GetString($"BulkPurgeStrategy_ConfirmationMessage_{bulkPurgeStrategy}");
                 string deleteConfirmation = string.Empty;
@@ -7506,12 +7510,12 @@ namespace ServiceBusExplorer.Forms
             }
         }
 
-        private void FindQueuesRecursive(List<QueueDescription> queues, TreeNode parent)
+        private void FindQueuesRecursive(List<QueueInfo> queues, TreeNode parent)
         {
             foreach (TreeNode child in parent.Nodes)
             {
-                if (child.Tag is QueueDescription)
-                    queues.Add(child.Tag as QueueDescription);
+                if (child.Tag is QueueInfo)
+                    queues.Add(child.Tag as QueueInfo);
                 else if (child.Tag is UrlSegmentWrapper)
                     this.FindQueuesRecursive(queues, child);
             }

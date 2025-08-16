@@ -43,6 +43,7 @@ using FastColoredTextBoxNS;
 using ServiceBusExplorer.UIHelpers;
 using static ServiceBusExplorer.ServiceBusHelper;
 using ServiceBusExplorer.Utilities.Helpers;
+using Abstractions;
 #endregion
 
 namespace ServiceBusExplorer.Controls
@@ -146,7 +147,7 @@ namespace ServiceBusExplorer.Controls
         #endregion
 
         #region Private Instance Fields
-        readonly QueueDescription queueDescription;
+        readonly QueueInfo queueDescription;
         readonly BindingSource bindingSource = new BindingSource();
         int receiveTimeout = 60;
         int sessionTimeout = 60;
@@ -218,7 +219,7 @@ namespace ServiceBusExplorer.Controls
                                 Func<Task> stopLog,
                                 Action startLog,
                                 ServiceBusHelper serviceBusHelper,
-                                QueueDescription queueDescription) 
+                                QueueInfo queueDescription) 
         {
             controlHelper = new TestControlHelper(mainForm, writeToLog, stopLog, startLog, serviceBusHelper);
             this.queueDescription = queueDescription;

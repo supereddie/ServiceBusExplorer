@@ -54,6 +54,7 @@ namespace ServiceBusExplorer
     using System.IO.Compression;
     using System.Web.UI.WebControls;
     using Abstractions;
+    using global::Abstractions;
     using ServiceBusConnectionStringBuilder = Microsoft.ServiceBus.ServiceBusConnectionStringBuilder;
 
     public enum BodyType
@@ -999,9 +1000,9 @@ namespace ServiceBusExplorer
         /// Retrieves an enumerable collection of all queues in the service bus namespace.
         /// </summary>
         /// <param name="filter">OData filter.</param>
-        /// <returns>Returns an IEnumerable<QueueDescription/> collection of all queues in the service namespace.
+        /// <returns>Returns an IEnumerable<QueueInfo/> collection of all queues in the service namespace.
         ///          Returns an empty collection if no queue exists in this service namespace.</returns>
-        public IEnumerable<QueueDescription> GetQueues(string filter, int timeoutInSeconds)
+        public IEnumerable<QueueInfo> GetQueues(string filter, int timeoutInSeconds)
         {
             return serviceBusQueue.GetQueues(filter, timeoutInSeconds);
         }
@@ -1010,8 +1011,8 @@ namespace ServiceBusExplorer
         /// Retrieves the queue from the service namespace.
         /// </summary>
         /// <param name="path">Path of the queue relative to the service namespace base address.</param>
-        /// <returns>A QueueDescription handle to the queue, or null if the queue does not exist in the service namespace. </returns>
-        public QueueDescription GetQueue(string path)
+        /// <returns>A QueueInfo handle to the queue, or null if the queue does not exist in the service namespace. </returns>
+        public QueueInfo GetQueue(string path)
         {
             return serviceBusQueue.GetQueue(path);
         }
@@ -1145,9 +1146,9 @@ namespace ServiceBusExplorer
         /// <summary>
         /// Creates a new queue in the service namespace with the given name.
         /// </summary>
-        /// <param name="description">A QueueDescription object describing the attributes with which the new queue will be created.</param>
-        /// <returns>Returns a newly-created QueueDescription object.</returns>
-        public QueueDescription CreateQueue(QueueDescription description)
+        /// <param name="description">A QueueInfo object describing the attributes with which the new queue will be created.</param>
+        /// <returns>Returns a newly-created QueueInfo object.</returns>
+        public QueueInfo CreateQueue(QueueInfo description)
         {
             return serviceBusQueue.CreateQueue(description);
         }
@@ -1155,9 +1156,9 @@ namespace ServiceBusExplorer
         /// <summary>
         /// Updates a queue in the service namespace with the given name.
         /// </summary>
-        /// <param name="description">A QueueDescription object describing the attributes with which the new queue will be updated.</param>
-        /// <returns>Returns an updated QueueDescription object.</returns>
-        public QueueDescription UpdateQueue(QueueDescription description)
+        /// <param name="description">A QueueInfo object describing the attributes with which the new queue will be updated.</param>
+        /// <returns>Returns an updated QueueInfo object.</returns>
+        public QueueInfo UpdateQueue(QueueInfo description)
         {
             return serviceBusQueue.UpdateQueue(description);
         }
@@ -1175,7 +1176,7 @@ namespace ServiceBusExplorer
         /// Deletes the queue passed as a argument.
         /// </summary>
         /// <param name="queueDescription">The queue to delete.</param>
-        public async Task DeleteQueue(QueueDescription queueDescription)
+        public async Task DeleteQueue(QueueInfo queueDescription)
         {
             await serviceBusQueue.DeleteQueue(queueDescription);
         }
@@ -1185,8 +1186,8 @@ namespace ServiceBusExplorer
         /// </summary>
         /// <param name="path">The path to an existing queue.</param>
         /// <param name="newPath">The new path to the renamed queue.</param>
-        /// <returns>Returns a QueueDescription with the new name.</returns>
-        public QueueDescription RenameQueue(string path, string newPath)
+        /// <returns>Returns a QueueInfo with the new name.</returns>
+        public QueueInfo RenameQueue(string path, string newPath)
         {
             return serviceBusQueue.RenameQueue(path, newPath);
         }
@@ -3971,17 +3972,17 @@ namespace ServiceBusExplorer
             return serviceBusHelper2;
         }
 
-        public async Task<QueueProperties> GetQueueProperties(QueueDescription oldQueueDescription)
+        public async Task<QueueProperties> GetQueueProperties(QueueInfo oldQueueDescription)
         {
-            return (await this.GetQueueProperties(new List<QueueDescription>() { oldQueueDescription }).ConfigureAwait(false)).FirstOrDefault();
+            return (await this.GetQueueProperties(new List<QueueInfo>() { oldQueueDescription }).ConfigureAwait(false)).FirstOrDefault();
         }
 
-        public async Task<List<QueueProperties>> GetQueueProperties(List<QueueDescription> oldQueueDescriptions)
+        public async Task<List<QueueProperties>> GetQueueProperties(List<QueueInfo> oldQueueDescriptions)
         {
             var administrationClient = new ServiceBusAdministrationClient(connectionString);
             var result = new List<QueueProperties>();
 
-            foreach (QueueDescription oldQueueDescription in oldQueueDescriptions)
+            foreach (QueueInfo oldQueueDescription in oldQueueDescriptions)
             {
                 result.Add(await administrationClient.GetQueueAsync(oldQueueDescription.Path).ConfigureAwait(false));
             }

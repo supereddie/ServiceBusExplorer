@@ -34,10 +34,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Workflows", "Workflows", "{
 		..\.github\workflows\handle-pull-request.yml = ..\.github\workflows\handle-pull-request.yml
 		..\.github\workflows\handle-tag.yml = ..\.github\workflows\handle-tag.yml
 		..\.github\workflows\publish.yml = ..\.github\workflows\publish.yml
-		..\.github\workflows\winget-submission.yml = ..\.github\workflows\winget-submission.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventGridExplorerLibrary", "EventGridExplorerLibrary\EventGridExplorerLibrary.csproj", "{11FD2BB5-A590-4844-852F-3DBF2A64F840}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Abstractions", "Abstractions\Abstractions.csproj", "{F662656A-CB3B-4694-BEDB-0C2F56DE4630}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -119,6 +120,14 @@ Global
 		{11FD2BB5-A590-4844-852F-3DBF2A64F840}.Release|Any CPU.Build.0 = Release|Any CPU
 		{11FD2BB5-A590-4844-852F-3DBF2A64F840}.Release|x86.ActiveCfg = Release|Any CPU
 		{11FD2BB5-A590-4844-852F-3DBF2A64F840}.Release|x86.Build.0 = Release|Any CPU
+		{F662656A-CB3B-4694-BEDB-0C2F56DE4630}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F662656A-CB3B-4694-BEDB-0C2F56DE4630}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F662656A-CB3B-4694-BEDB-0C2F56DE4630}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F662656A-CB3B-4694-BEDB-0C2F56DE4630}.Debug|x86.Build.0 = Debug|Any CPU
+		{F662656A-CB3B-4694-BEDB-0C2F56DE4630}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F662656A-CB3B-4694-BEDB-0C2F56DE4630}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F662656A-CB3B-4694-BEDB-0C2F56DE4630}.Release|x86.ActiveCfg = Release|Any CPU
+		{F662656A-CB3B-4694-BEDB-0C2F56DE4630}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

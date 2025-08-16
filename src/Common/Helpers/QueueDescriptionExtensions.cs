@@ -19,13 +19,14 @@
 //=======================================================================================
 #endregion
 
+using Abstractions;
 using  Microsoft.ServiceBus.Messaging;
 
 namespace ServiceBusExplorer.Helpers
 {
     public static class QueueDescriptionExtensions
     {
-        public static int MaxSizeInGigabytes(this QueueDescription queueDescription)
+        public static int MaxSizeInGigabytes(this QueueInfo queueDescription)
         {
             return (int) (queueDescription.MaxSizeInMegabytes / 1024);
         }

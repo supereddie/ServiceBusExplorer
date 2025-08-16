@@ -1,28 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.ServiceBus.Messaging;
+using Abstractions;
 
 namespace ServiceBusExplorer.WindowsAzure
 {
     internal interface IServiceBusQueue : IServiceBusEntity
     {
-        QueueDescription CreateQueue(QueueDescription description);
+        QueueInfo CreateQueue(QueueInfo description);
 
-        Task DeleteQueue(QueueDescription queueDescription);
+        Task DeleteQueue(QueueInfo queueDescription);
 
         Task DeleteQueues(IEnumerable<string> queues);
 
-        QueueDescription GetQueue(string path);
+        QueueInfo GetQueue(string path);
 
         Uri GetQueueDeadLetterQueueUri(string queuePath);
 
-        IEnumerable<QueueDescription> GetQueues(string filter, int timeoutInSeconds);
+        IEnumerable<QueueInfo> GetQueues(string filter, int timeoutInSeconds);
 
         Uri GetQueueUri(string queuePath);
 
-        QueueDescription RenameQueue(string path, string newPath);
+        QueueInfo RenameQueue(string path, string newPath);
 
-        QueueDescription UpdateQueue(QueueDescription description);
+        QueueInfo UpdateQueue(QueueInfo description);
     }
 }

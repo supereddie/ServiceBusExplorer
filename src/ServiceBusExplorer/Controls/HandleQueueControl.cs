@@ -34,7 +34,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-
+using Abstractions;
 using Microsoft.ServiceBus.Messaging;
 
 using ServiceBusExplorer.Forms;
@@ -42,6 +42,7 @@ using ServiceBusExplorer.Helpers;
 using ServiceBusExplorer.ServiceBus.Helpers;
 using ServiceBusExplorer.UIHelpers;
 using ServiceBusExplorer.Utilities.Helpers;
+using ServiceBusExplorer.WindowsAzure;
 
 #endregion
 
@@ -232,7 +233,7 @@ namespace ServiceBusExplorer.Controls
 
         #region Private Fields
 
-        private QueueDescription queueDescription = default!;
+        private QueueInfo queueDescription = default!;
         private readonly ServiceBusHelper serviceBusHelper = default!;
         private readonly WriteToLogDelegate writeToLog = default!;
         private readonly string path = default!;
@@ -291,7 +292,7 @@ namespace ServiceBusExplorer.Controls
         #region Public Constructor
 
         public HandleQueueControl(WriteToLogDelegate writeToLog, ServiceBusHelper serviceBusHelper,
-            QueueDescription queueDescription, string path, bool duplicateQueue)
+            QueueInfo queueDescription, string path, bool duplicateQueue)
         {
             this.writeToLog = writeToLog;
             this.serviceBusHelper = serviceBusHelper;
@@ -447,7 +448,7 @@ namespace ServiceBusExplorer.Controls
             }
         }
 
-        public void RefreshData(QueueDescription queue)
+        public void RefreshData(QueueInfo queue)
         {
             try
             {
@@ -1139,7 +1140,7 @@ namespace ServiceBusExplorer.Controls
             BindingList<AuthorizationRuleWrapper> bindingList;
             if (queueDescription.Authorization.Count > 0)
             {
-                var enumerable = queueDescription.Authorization.Select(r => new AuthorizationRuleWrapper(r));
+                var enumerable = queueDescription.Authorization.Select(r => new AuthorizationRuleWrapper(r.ToWindowsAzure()));
                 bindingList = new BindingList<AuthorizationRuleWrapper>(enumerable.ToList())
                 {
                     AllowEdit = true,
@@ -2053,7 +2054,7 @@ namespace ServiceBusExplorer.Controls
                         return;
                     }
 
-                    var description = new QueueDescription(txtPath.Text)
+                    var description = new QueueInfo(txtPath.Text)
                     {
                         UserMetadata = txtUserMetadata.Text,
                         ForwardTo = txtForwardTo.Text,
@@ -2161,44 +2162,36 @@ namespace ServiceBusExplorer.Controls
                                     continue;
                                 }
                             }
-                            var rightList = new List<AccessRights>();
+                            var rightList = new List<EntityAccessRights>();
                             if (rule.Manage)
                             {
-                                rightList.AddRange(new[] { AccessRights.Manage, AccessRights.Send, AccessRights.Listen });
+                                rightList.AddRange(new[] { EntityAccessRights.Manage, EntityAccessRights.Send, EntityAccessRights.Listen });
                             }
                             else
                             {
                                 if (rule.Send)
                                 {
-                                    rightList.Add(AccessRights.Send);
+                                    rightList.Add(EntityAccessRights.Send);
                                 }
                                 if (rule.Listen)
                                 {
-                                    rightList.Add(AccessRights.Listen);
+                                    rightList.Add(EntityAccessRights.Listen);
                                 }
                             }
                             if (serviceBusHelper.IsCloudNamespace)
                             {
-                                if (string.IsNullOrWhiteSpace(rule.SecondaryKey))
-                                {
-                                    description.Authorization.Add(new SharedAccessAuthorizationRule(rule.KeyName,
-                                        rule.PrimaryKey ?? SharedAccessAuthorizationRule.GenerateRandomKey(),
-                                        rightList));
-                                }
-                                else
-                                {
-                                    description.Authorization.Add(new SharedAccessAuthorizationRule(rule.KeyName,
-                                        rule.PrimaryKey ?? SharedAccessAuthorizationRule.GenerateRandomKey(),
-                                        rule.SecondaryKey ?? SharedAccessAuthorizationRule.GenerateRandomKey(),
-                                        rightList));
-                                }
+                                description.Authorization.AddSharedAccessRule(rule.KeyName,
+                                    rule.PrimaryKey,
+                                    rule.SecondaryKey,
+                                    rightList);
+                               
                             }
                             else
                             {
-                                description.Authorization.Add(new AllowRule(rule.IssuerName,
+                                description.Authorization.AddAllowRule(rule.IssuerName,
                                     rule.ClaimType,
                                     rule.ClaimValue,
-                                    rightList));
+                                    rightList);
                             }
                         }
                     }
@@ -2375,56 +2368,43 @@ namespace ServiceBusExplorer.Controls
                                     continue;
                                 }
                             }
-                            var rightList = new List<AccessRights>();
+                            var rightList = new List<EntityAccessRights>();
                             if (rule.Manage)
                             {
                                 rightList.AddRange(new[]
-                                    {AccessRights.Manage, AccessRights.Send, AccessRights.Listen});
+                                    {EntityAccessRights.Manage, EntityAccessRights.Send, EntityAccessRights.Listen});
                             }
                             else
                             {
                                 if (rule.Send)
                                 {
-                                    rightList.Add(AccessRights.Send);
+                                    rightList.Add(EntityAccessRights.Send);
                                 }
                                 if (rule.Listen)
                                 {
-                                    rightList.Add(AccessRights.Listen);
+                                    rightList.Add(EntityAccessRights.Listen);
                                 }
                             }
                             if (serviceBusHelper.IsCloudNamespace)
                             {
-                                if (string.IsNullOrWhiteSpace(rule.PrimaryKey) &&
-                                    string.IsNullOrWhiteSpace(rule.SecondaryKey))
-                                {
-                                    queueDescription.Authorization.Add(new SharedAccessAuthorizationRule(rule.KeyName,
-                                        rightList));
-                                }
-                                else if (string.IsNullOrWhiteSpace(rule.SecondaryKey))
-                                {
-                                    queueDescription.Authorization.Add(new SharedAccessAuthorizationRule(rule.KeyName,
-                                        rule.PrimaryKey ?? SharedAccessAuthorizationRule.GenerateRandomKey(),
-                                        rightList));
-                                }
-                                else
-                                {
-                                    queueDescription.Authorization.Add(new SharedAccessAuthorizationRule(rule.KeyName,
-                                        rule.PrimaryKey ?? SharedAccessAuthorizationRule.GenerateRandomKey(),
-                                        rule.SecondaryKey ?? SharedAccessAuthorizationRule.GenerateRandomKey(),
-                                        rightList));
-                                }
+                                
+                                queueDescription.Authorization.AddSharedAccessRule(rule.KeyName,
+                                    rule.PrimaryKey,
+                                    rule.SecondaryKey,
+                                    rightList);
+                                
                             }
                             else
                             {
-                                queueDescription.Authorization.Add(new AllowRule(rule.IssuerName,
+                                queueDescription.Authorization.AddAllowRule(rule.IssuerName,
                                     rule.ClaimType,
                                     rule.ClaimValue,
-                                    rightList));
+                                    rightList);
                             }
                         }
                     }
 
-                    queueDescription.Status = EntityStatus.Disabled;
+                    queueDescription.Status = BaseEntityStatus.Disabled;
                     serviceBusHelper.UpdateQueue(queueDescription);
                 }
                 catch (Exception ex)
@@ -2434,8 +2414,8 @@ namespace ServiceBusExplorer.Controls
                 }
                 finally
                 {
-                    queueDescription.Status = EntityStatus.Active;
-                    queueDescription = serviceBusHelper.NamespaceManager.UpdateQueue(queueDescription);
+                    queueDescription.Status = BaseEntityStatus.Active;
+                    queueDescription = serviceBusHelper.UpdateQueue(queueDescription);
                     InitializeData();
                 }
             }
@@ -2515,7 +2495,7 @@ namespace ServiceBusExplorer.Controls
         {
             if (!string.IsNullOrWhiteSpace(path))
             {
-                QueueDescription queueDescriptionSource = default!;
+                QueueInfo queueDescriptionSource = default!;
                 try
                 {
                     queueDescriptionSource = serviceBusHelper.GetQueue(path);

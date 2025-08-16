@@ -1,4 +1,4 @@
-﻿using Microsoft.ServiceBus.Messaging;
+﻿using Abstractions;
 using System;
 using System.IO;
 using System.Windows.Forms;
@@ -7,15 +7,15 @@ namespace ServiceBusExplorer.Forms
 {
     public partial class ChangeQueueStatusForm : Form
     {
-        public EntityStatus EntityStatus { get; private set; }
+        public BaseEntityStatus EntityStatus { get; private set; }
 
-        public ChangeQueueStatusForm(EntityStatus entityCurrentStatus)
+        public ChangeQueueStatusForm(BaseEntityStatus entityCurrentStatus)
         {
             InitializeComponent();
             SetSelected(entityCurrentStatus);
         }
 
-        private void SetSelected(EntityStatus entityStatus)
+        private void SetSelected(BaseEntityStatus entityStatus)
         {
             if (!cbStatus.Items.Contains(entityStatus.ToString()))
             {
@@ -27,7 +27,7 @@ namespace ServiceBusExplorer.Forms
         
         private void btnOk_Click(object sender, EventArgs e)
         {
-            EntityStatus = (EntityStatus)Enum.Parse(typeof(EntityStatus), cbStatus.SelectedItem.ToString());
+            EntityStatus = (BaseEntityStatus)Enum.Parse(typeof(BaseEntityStatus), cbStatus.SelectedItem.ToString());
             DialogResult = DialogResult.OK;
             Close();
         }

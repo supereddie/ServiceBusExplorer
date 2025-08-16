@@ -41,6 +41,8 @@ using Microsoft.ServiceBus.Messaging;
 using FastColoredTextBoxNS;
 using ServiceBusExplorer.UIHelpers;
 using ServiceBusExplorer.Utilities.Helpers;
+using Abstractions;
+using ServiceBusExplorer.WindowsAzure;
 
 #endregion
 
@@ -1281,16 +1283,17 @@ namespace ServiceBusExplorer.Controls
             if (entityDescription is QueueDescription)
             {
                 var queueDescription = entityDescription as QueueDescription;
-                queueDescription = serviceBusHelper.GetQueue(queueDescription.Path);
+                var queueInfo = serviceBusHelper.GetQueue(queueDescription.Path);
+                queueDescription = queueInfo.ToWindowsAzure();
                 entityDescription = queueDescription;
                 propertyList.AddRange(new[]
                     {
-                        new[] {ActiveMessageCount, queueDescription.MessageCountDetails.ActiveMessageCount.ToString(CultureInfo.CurrentCulture)},
-                        new[] {DeadletterCount, queueDescription.MessageCountDetails.DeadLetterMessageCount.ToString(CultureInfo.CurrentCulture)},
-                        new[] {ScheduledMessageCount, queueDescription.MessageCountDetails.ScheduledMessageCount.ToString(CultureInfo.CurrentCulture)},
-                        new[] {TransferMessageCount, queueDescription.MessageCountDetails.TransferMessageCount.ToString(CultureInfo.CurrentCulture)},
-                        new[] {TransferDeadLetterMessageCount, queueDescription.MessageCountDetails.TransferDeadLetterMessageCount.ToString(CultureInfo.CurrentCulture)},
-                        new[] {MessageCount, queueDescription.MessageCount.ToString(CultureInfo.CurrentCulture)}
+                        new[] {ActiveMessageCount, queueInfo.MessageCountDetails.ActiveMessageCount.ToString(CultureInfo.CurrentCulture)},
+                        new[] {DeadletterCount, queueInfo.MessageCountDetails.DeadLetterMessageCount.ToString(CultureInfo.CurrentCulture)},
+                        new[] {ScheduledMessageCount, queueInfo.MessageCountDetails.ScheduledMessageCount.ToString(CultureInfo.CurrentCulture)},
+                        new[] {TransferMessageCount, queueInfo.MessageCountDetails.TransferMessageCount.ToString(CultureInfo.CurrentCulture)},
+                        new[] {TransferDeadLetterMessageCount, queueInfo.MessageCountDetails.TransferDeadLetterMessageCount.ToString(CultureInfo.CurrentCulture)},
+                        new[] {MessageCount, queueInfo.MessageCount.ToString(CultureInfo.CurrentCulture)}
                     });
             }
             if (entityDescription is SubscriptionDescription)

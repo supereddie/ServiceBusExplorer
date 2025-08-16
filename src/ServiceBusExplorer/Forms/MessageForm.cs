@@ -36,6 +36,7 @@ using ServiceBusExplorer.Helpers;
 using Microsoft.ServiceBus.Messaging;
 using FastColoredTextBoxNS;
 using ServiceBusExplorer.Utilities.Helpers;
+using Abstractions;
 
 #endregion
 
@@ -89,7 +90,7 @@ namespace ServiceBusExplorer.Forms
         readonly ServiceBusHelper serviceBusHelper;
         readonly WriteToLogDelegate writeToLog;
         readonly BindingSource bindingSource = new BindingSource();
-        readonly QueueDescription queueDescription; // Might be null
+        readonly QueueInfo queueDescription; // Might be null
         readonly SubscriptionWrapper subscriptionWrapper; // Might be null
         #endregion
 
@@ -221,7 +222,7 @@ namespace ServiceBusExplorer.Forms
             }
         }
 
-        public MessageForm(QueueDescription queueDescription, QueueType queueType, BrokeredMessage brokeredMessage,
+        public MessageForm(QueueInfo queueDescription, QueueType queueType, BrokeredMessage brokeredMessage,
             ServiceBusHelper serviceBusHelper, WriteToLogDelegate writeToLog) :
             this(brokeredMessage, serviceBusHelper, writeToLog)
         {
@@ -273,7 +274,7 @@ namespace ServiceBusExplorer.Forms
             }
         }
 
-        public MessageForm(QueueDescription queueDescription, QueueType queueType, IEnumerable<BrokeredMessage> brokeredMessages,
+        public MessageForm(QueueInfo queueDescription, QueueType queueType, IEnumerable<BrokeredMessage> brokeredMessages,
             ServiceBusHelper serviceBusHelper, WriteToLogDelegate writeToLog) :
             this(brokeredMessages, serviceBusHelper, writeToLog)
         {

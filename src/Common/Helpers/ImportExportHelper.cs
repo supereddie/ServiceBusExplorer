@@ -21,6 +21,7 @@
 
 #region References
 
+using Abstractions;
 using Microsoft.Azure.NotificationHubs;
 using Microsoft.ServiceBus;
 using Microsoft.ServiceBus.Management;
@@ -38,6 +39,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
+using ServiceBusExplorer.WindowsAzure;
 
 #endregion
 
@@ -53,7 +55,7 @@ namespace ServiceBusExplorer.Helpers
         // Constants
         //***************************
         private const string Namespace = "http://schemas.microsoft.com/servicebusexplorer";
-        private const string QueueDescriptionClass = "QueueDescription";
+        private const string QueueDescriptionClass = "QueueInfo";
         private const string TopicDescriptionClass = "TopicDescription";
         private const string RelayDescriptionClass = "RelayDescription";
         private const string NotificationHubDescriptionClass = "NotificationHubDescription";
@@ -130,7 +132,7 @@ namespace ServiceBusExplorer.Helpers
         public ImportExportHelper(WriteToLogDelegate writeToLogDelegate)
         {
             this.writeToLogDelegate = writeToLogDelegate;
-            GetProperties(typeof(QueueDescription), true, true);
+            GetProperties(typeof(QueueInfo), true, true);
             GetProperties(typeof(TopicDescription), true, true);
             GetProperties(typeof(RelayDescription), true, true);
             GetProperties(typeof(EventHubDescription), true, true);
@@ -185,7 +187,7 @@ namespace ServiceBusExplorer.Helpers
                     xmlWriterSettings.Indent = true;
                     using (var xmlWriter = XmlWriter.Create(stringWriter, xmlWriterSettings))
                     {
-                        var queueList = entityList.Where(e => e is QueueDescription).Cast<QueueDescription>();
+                        var queueList = entityList.Where(e => e is QueueInfo).Cast<QueueInfo>();
                         var topicList = entityList.Where(e => e is TopicDescription).Cast<TopicDescription>();
                         var relayList = entityList.Where(e => e is RelayDescription).Cast<RelayDescription>();
                         var eventHubList = entityList.Where(e => e is EventHubDescription).Cast<EventHubDescription>();
@@ -194,7 +196,7 @@ namespace ServiceBusExplorer.Helpers
                         xmlWriter.WriteAttributeString(NamespaceAttribute, string.IsNullOrWhiteSpace(serviceBusHelper.Namespace) ?
                             Unknown :
                             serviceBusHelper.Namespace);
-                        var queueDescriptions = queueList as QueueDescription[] ?? queueList.ToArray();
+                        var queueDescriptions = queueList as QueueInfo[] ?? queueList.ToArray();
                         if (queueDescriptions.Any())
                         {
                             xmlWriter.WriteStartElement(QueueEntityList);
@@ -587,9 +589,9 @@ namespace ServiceBusExplorer.Helpers
                 }
                 xmlWriter.WriteEndElement();
             }
-            if (entity is QueueDescription)
+            if (entity is QueueInfo)
             {
-                var queue = entity as QueueDescription;
+                var queue = entity as QueueInfo;
                 if (queue.Authorization.Any())
                 {
                     xmlWriter.WriteStartElement(AuthorizationRuleList);
@@ -693,7 +695,7 @@ namespace ServiceBusExplorer.Helpers
                 {
                     return;
                 }
-                var fullName = typeof(QueueDescription).FullName;
+                var fullName = typeof(QueueInfo).FullName;
                 if (string.IsNullOrWhiteSpace(fullName) ||
                     !propertyCache.ContainsKey(fullName))
                 {
@@ -726,7 +728,7 @@ namespace ServiceBusExplorer.Helpers
                         {
                             continue;
                         }
-                        var queueDescription = new QueueDescription(propertyValue[Path] as string);
+                        var queueDescription = new QueueInfo(propertyValue[Path] as string);
                         SetPropertyValue(propertyDictionary,
                                          propertyValue,
                                          queueDescription);
@@ -736,7 +738,16 @@ namespace ServiceBusExplorer.Helpers
                         {
                             foreach (var authorizationRule in rules)
                             {
-                                queueDescription.Authorization.Add(authorizationRule);
+                                var rights = authorizationRule.Rights.Select(QueueInfoExtensions.ToInfo);
+                                if (authorizationRule is SharedAccessAuthorizationRule)
+                                {
+                                    var r = authorizationRule as SharedAccessAuthorizationRule;
+                                    queueDescription.Authorization.AddSharedAccessRule(r.KeyName, r.PrimaryKey, r.SecondaryKey, rights);
+                                }
+                                else
+                                {
+                                    queueDescription.Authorization.AddAllowRule(authorizationRule.IssuerName, authorizationRule.ClaimType, authorizationRule.ClaimValue, rights);
+                                }
                             }
                         }
                         serviceBusHelper.CreateQueue(queueDescription);

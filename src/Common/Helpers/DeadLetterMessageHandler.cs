@@ -28,6 +28,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using ServiceBusExplorer.Utilities.Helpers;
 using Microsoft.ServiceBus.Messaging;
+using Abstractions;
 
 #endregion
 
@@ -53,7 +54,7 @@ namespace ServiceBusExplorer.Helpers
     {
         #region Private Fields
         // Either queueDescription or subscriptionWrapper is used - but never both.
-        readonly QueueDescription sourceQueueDescription;
+        readonly QueueInfo sourceQueueDescription;
         readonly SubscriptionWrapper sourceSubscriptionWrapper;
         readonly int receiveTimeoutInSeconds;
         readonly ServiceBusHelper serviceBusHelper;
@@ -62,7 +63,7 @@ namespace ServiceBusExplorer.Helpers
 
         #region Public Constructors
         public DeadLetterMessageHandler(WriteToLogDelegate writeToLog, ServiceBusHelper serviceBusHelper,
-            int receiveTimeoutInSeconds, QueueDescription queueDescription)
+            int receiveTimeoutInSeconds, QueueInfo queueDescription)
             : this(writeToLog, serviceBusHelper, receiveTimeoutInSeconds)
         {
             sourceQueueDescription = queueDescription;
